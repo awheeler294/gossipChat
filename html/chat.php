@@ -9,10 +9,8 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/gossip/config/settings.php';
 
 User::getCurrentUser();
 
-$nodes = ChatNode::getNodes();
+$randomNode = GossipNode::getRandomNode();
 
-$randomNode = rand(0, count($nodes) - 1);
+$nodeURL = $randomNode->getNodeURL();
 
-$nodeURL = $nodes[$randomNode]->getNodeURL();
-
-header("Location: http://$nodeURL/gossip/html/chat_interface.php");
+header("Location: http://$nodeURL/chat_interface.php");
