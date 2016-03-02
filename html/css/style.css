@@ -1,0 +1,22 @@
+.content-area {
+    margin-top: 2%;
+    margin-left: 20%;
+    margin-right: 20%;
+    margin-bottom: 2%;
+
+    padding-bottom: 5px;
+    padding-top: 5px;
+}
+
+.info-area {
+    margin-bottom: 2%;
+}
+
+.account-buttons {
+    margin-top: 1%;
+}
+
+.chat-area {
+    border-top: thin solid lightgrey;
+    padding-top: 5px;
+}
