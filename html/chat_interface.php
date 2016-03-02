@@ -9,7 +9,9 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/gossip/config/settings.php';
 
 $currentUser = User::getCurrentUser();
 
-$node = ChatNode::build($_SERVER['HTTP_HOST']);
+$node = ChatNode::getLocalNode();
+
+$messages = ChatMessage::getMessages();
 
 ?>
 
@@ -38,8 +40,14 @@ $node = ChatNode::build($_SERVER['HTTP_HOST']);
             </div>
 
             <div class="chat-area">
-
-                <form>
+                <div class="messages-area">
+                    <?php foreach ($messages as $message): ?>
+                        <div class="message">
+                            <strong><?= $message->getOriginator() ?>: </strong><?= $message->getText()?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <form id="send-message-form">
                     <div class="row">
                         <div class="col-lg-12">
                             <div class="input-group">

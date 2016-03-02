@@ -66,6 +66,13 @@ class ChatMessage
         $this->Text = $Text;
     }
 
+    public function toArray() {
+        return array('MessageID'  => $this->MessageID,
+                     'Originator' => $this->Originator,
+                     'Text'       => $this->Text,
+            );
+    }
+
     public static function getMessages() {
         $messagesQuery = 'SELECT message_id, originator, message_text
                           FROM gossip_messages';
@@ -84,7 +91,17 @@ class ChatMessage
     }
 
     public static function saveMessage($order, $originator, $text) {
-        $node = ChatNode::build($_SERVER['HTTP_HOST']);
+        $node = ChatNode::getLocalNode();
         $messageId = $node->getNodeId() . ':' . $order;
+
+        $messagesQuery = 'INSERT INTO gossip_messages(message_id, originator, message_text)
+                          VALUES (:messageId, :originator, :text)';
+        $stmt = Database::getDB()->prepare($messagesQuery);
+        $stmt->bindValue('messageId', $messageId);
+        $stmt->bindValue('originator', $originator);
+        $stmt->bindValue('text', $text);
+        $stmt->execute();
+
+        return self::getMessages();
     }
 }

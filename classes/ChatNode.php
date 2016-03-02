@@ -70,6 +70,10 @@ class ChatNode {
         return $nodes;
     }
 
+    public static function getLocalNode() {
+        return self::build($_SERVER['HTTP_HOST']);
+    }
+
     public static function createID() {
         mt_srand((double)microtime()*10000);//optional for php 4.2.0 and up.
         $charId = strtoupper(md5(uniqid(rand(), true)));
