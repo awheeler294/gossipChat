@@ -7,10 +7,11 @@
  */
 require_once $_SERVER['DOCUMENT_ROOT'] . '/gossip/config/settings.php';
 
-User::getCurrentUser();
+$currentUser = User::getCurrentUser();
+$userId = $currentUser->getUserId();
 
 $randomNode = GossipNode::getRandomNode();
 
 $nodeURL = $randomNode->getNodeURL();
 
-header("Location: http://$nodeURL/chat_interface.php");
+header("Location: http://$nodeURL/chat_interface.php?userId=$userId");

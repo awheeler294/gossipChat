@@ -1,6 +1,8 @@
 <?php
 Class User {
 	const USER_ID = 'user_id';
+	const ANONYMOUS_USER_NAME = 'Anonymous';
+	const ANONYMOUS_USER_ID = -1;
 
 	private $userId;
 	private $username;
@@ -84,6 +86,9 @@ Class User {
 
 
 	public static function getUserById($userId) {
+		if ($userId == self::ANONYMOUS_USER_ID) {
+			return new User(self::ANONYMOUS_USER_ID, self::ANONYMOUS_USER_NAME);
+		}
 		$userQuery = 'SELECT id, username FROM users WHERE id = :userId';
         $stmt = Database::getDB()->prepare($userQuery);
         $stmt->bindValue('userId', $userId);
@@ -152,6 +157,41 @@ Class User {
 
 	public static function logout() {
 		unset($_SESSION[self::USER_ID]);
+	}
+
+	public static function setUser($userId) {
+		if (session_status() != PHP_SESSION_ACTIVE) {
+			session_start();
+		}
+
+		if (!isset($_SESSION[self::USER_ID]) || $_SESSION[self::USER_ID] != $userId) {
+
+			if ($userId == self::ANONYMOUS_USER_ID) {
+				$_SESSION[self::USER_ID] = $userId;
+				return new User(self::ANONYMOUS_USER_ID, self::ANONYMOUS_USER_NAME);
+			}
+
+			$userQuery = 'SELECT id, username FROM users WHERE id = :userId';
+			$stmt = Database::getDB()->prepare($userQuery);
+			$stmt->bindValue('userId', $userId);
+			$stmt->execute();
+			$userResults = $stmt->fetch(PDO::FETCH_ASSOC);
+
+			if ($userResults) {
+				// error_log('[mtapi][User][login]::$userResults ' . print_r($userResults, true));
+
+				$username = $userResults['username'];
+
+				$recordLoginQuery = 'INSERT INTO user_logins(user_id) VALUES(:userId)';
+				$stmt = Database::getDB()->prepare($recordLoginQuery);
+				$stmt->bindValue('userId', $userId);
+				$stmt->execute();
+
+				$_SESSION[self::USER_ID] = $userId;
+
+				return new User($userId, $username);
+			}
+		}
 	}
 
 }
