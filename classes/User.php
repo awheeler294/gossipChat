@@ -46,7 +46,7 @@ Class User {
         $stmt->bindValue('userId', $this->userId);
         $stmt->execute();
         $checkinResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        error_log('[mtapt][User][getCheckins]::$checkinResults ' . print_r($checkinResults, true));
+        // error_log('[mtapt][User][getCheckins]::$checkinResults ' . print_r($checkinResults, true));
 
         return $checkinResults;
 	}

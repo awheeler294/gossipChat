@@ -1,16 +1,14 @@
 /**
  * Created by Andrew on 3/1/2016.
  */
+var order = 0;
 $(document).ready(function() {
 
-    var order = getOrder();
+    getOrder();
 
     // set interval
-    var tid = setInterval(mycode, 2000);
-    function mycode() {
-        // do some stuff...
-        // no need to recall the function (it's an interval, it'll loop forever)
-    }
+    var tid = setInterval(pollForMessages, 500);
+
     function abortTimer() { // to be called when you want to stop the timer
         clearInterval(tid);
     }
@@ -50,7 +48,7 @@ function pollForMessages() {
         url: url,
         data: {},
         dataType: "json",
-        type: "POST",
+        type: "GET",
         success: function (response) {
             updateMessages(response.messages);
         },
@@ -61,7 +59,21 @@ function pollForMessages() {
 }
 
 function getOrder() {
-    return 0;
+
+    var url = "/gossip/html/ajax.php?function=getOrder";
+
+    $.ajax({
+        url: url,
+        data: {},
+        dataType: "json",
+        type: "GET",
+        success: function (response) {
+            order = response.order;
+        },
+        error: function () {
+            console.log('An error occurred');
+        }
+    });
 }
 
 function updateMessages(messages) {

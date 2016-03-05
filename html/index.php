@@ -1,48 +1,41 @@
 <?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/gossip/config/settings.php';
 
-$users = User::getUsers();
-$currentUser = User::getCurrentUser();
 
-?>
-
-<html>
-    <head>
-        <link href="css/style.css" rel="stylesheet">
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
-        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
-    </head>
-    <body>
-        <div class="content-area">
-            <div class="info-area">
-
-                <?php if ($currentUser): ?>
-                    Logged in as: <?= $currentUser->getUsername(); ?>
-                <?php endif; ?>
-
-                <div class="account-buttons">
-                    <a href="login.php" class="btn btn-default" role="button">Login</a>
-                    <a href="create_account.php" class="btn btn-default" role="button">Create Account</a>
-                    <a href="logout.php" class="btn btn-default" role="button">Logout</a>
-                </div>
-
-            </div>
-
-            <div>
-                Users:
-                <ul>
-                    <?php foreach ($users as $user): ?>
-                        <li>
-                            <a href="profile.php?userId=<?= $user->getUserId()?>"><?= $user->getUsername() ?></a>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
-
-            <a href="chat.php" class="btn btn-default" role="button">Chat</a>
-        </div>
-    </body>
+header("Access-Control-Allow-Orgin: *");
+header("Access-Control-Allow-Methods: *");
+header("Content-Type: application/json");
 
 
-</html>
+//GossipNode::processMessage(array(
+//        'Rumor' => array(
+//            'MessageID'  => 'ABCD-1234-ABCD-1234-ABCD-1234:5' ,
+//            'Originator' => 'Phil',
+//            'Text'       => 'Hello World!',
+//        ),
+//        'EndPoint' => 'https://example.com/gossip/13244',
+//    )
+//);
+//GossipNode::processMessage(array(
+//        'Rumor' => array(
+//            'MessageID'  => '314BFC97-F451-186C-75CD-E777D2BCC043:5' ,
+//            'Originator' => 'Andrew',
+//            'Text'       => 'test js',
+//        ),
+//        'EndPoint' => 'https://example.com/gossip/13244',
+//    )
+//);
+
+//error_log('[Gossip][index.php]::$_REQUEST ' . print_r($_REQUEST, true));
+//error_log('[Gossip][index.php]::file_get_contents("php://input") ' . print_r(file_get_contents("php://input"), true));
+//error_log('[Gossip][index.php] Headers: ' . print_r(getallheaders(), true));
+
+
+$data = file_get_contents("php://input");
+
+if ($data) {
+    GossipNode::processMessage(json_decode($data, true));
+}
+else {
+    header("Location: /gossip/html/home.php");
+}

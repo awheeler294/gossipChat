@@ -136,19 +136,77 @@ class ChatMessage
         $node = LocalNode::getLocalNode();
         $messageUUID = $node->getNodeId();
 
-        $messagesQuery = 'INSERT INTO gossip_messages(message_uuid, message_order, originator, message_text)
-                          VALUES (:messageUUID, :messageOrder, :originator, :text)';
-        $stmt = Database::getDB()->prepare($messagesQuery);
-        $stmt->bindValue('messageUUID', $messageUUID);
-        $stmt->bindValue('messageOrder', $order);
-        $stmt->bindValue('originator', $originator);
-        $stmt->bindValue('text', $text);
-        $stmt->execute();
+        self::saveMessage($messageUUID, $order, $originator, $text);
 
         return self::getMessages();
     }
 
-    public static function pollForMessages() {
+    public static function getOrder() {
+        $node = LocalNode::getLocalNode();
+        $messageUUID = $node->getNodeId();
 
+        $orderQuery = 'SELECT message_order
+                       FROM gossip_messages
+                       WHERE message_uuid = :messageUUID
+                       ORDER BY message_order DESC
+                       LIMIT 1';
+        $stmt = Database::getDB()->prepare($orderQuery);
+        $stmt->bindValue('messageUUID', $messageUUID);
+        $stmt->execute();
+        $orderResults = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $order = $orderResults['message_order'] + 1;
+        return $order;
+    }
+
+    public static function pollForMessages() {
+        $messages = self::getMessages();
+
+        $messageIDs = array();
+
+        foreach ($messages as $message) {
+            $messageIDs[] = $message->getMessageID();
+        }
+
+        GossipNode::sendWantMessage($messageIDs);
+
+        return $messages;
+    }
+
+    public static function saveRumorMessage ($messageID, $originator, $text) {
+        list($messageUUID, $messageOrder) = explode(':', $messageID);
+
+        if (!self::messageExists($messageUUID, $messageOrder)) {
+//            self::saveMessage($messageUUID, $messageOrder, $originator, $text);
+        }
+    }
+
+    private static function messageExists($messageUUID, $messageOrder) {
+
+        $messageExistsSQL = 'SELECT EXISTS(SELECT *
+                                          FROM gossip_messages
+                                          WHERE message_uuid = :messageUUID AND message_order = :messageOrder)';
+        $stmt = Database::getDB()->prepare($messageExistsSQL);
+        $stmt->bindValue('messageUUID', $messageUUID);
+        $stmt->bindValue('messageOrder', $messageOrder);
+        $stmt->execute();
+        $messageExistsResults = $stmt->fetch(PDO::FETCH_NUM);
+
+//        error_log('[gossip][ChatMessage][messageExists]::$messageOrder ' . print_r($messageOrder, true));
+//        error_log('[gossip][ChatMessage][messageExists]::$messageUUID ' . print_r($messageUUID, true));
+//        error_log('[gossip][ChatMessage][messageExists]::$messageExistsResults ' . print_r($messageExistsResults, true));
+
+        return $messageExistsResults[0];
+    }
+
+    private static function saveMessage($messageUUID, $messageOrder, $originator, $text) {
+        $messagesQuery = 'INSERT INTO gossip_messages(message_uuid, message_order, originator, message_text)
+                          VALUES (:messageUUID, :messageOrder, :originator, :text)';
+        $stmt = Database::getDB()->prepare($messagesQuery);
+        $stmt->bindValue('messageUUID', $messageUUID);
+        $stmt->bindValue('messageOrder', $messageOrder);
+        $stmt->bindValue('originator', $originator);
+        $stmt->bindValue('text', $text);
+        $stmt->execute();
     }
 }

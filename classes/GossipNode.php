@@ -69,6 +69,15 @@ class GossipNode {
         return $node;
     }
 
+    public static function processMessage(array $message) {
+        if (isset($message['Want'])) {
+            self::processWantMessage($message);
+        }
+        else if (isset($message['Rumor'])) {
+            self::processRumorMessage($message);
+        }
+    }
+
     public static function sendWantMessage(array $messageIDs) {
         $localNode = self::getLocalNode();
 
@@ -76,20 +85,46 @@ class GossipNode {
 
         $randomNode = GossipNode::getRandomNode();
         $nodeURL = $randomNode->getNodeURL();
+        $nodeURL = "http://$nodeURL/";
 
-        $wantMessage = json_encode($wantMessage);
+//        error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . ']::$nodeURL ' . print_r($nodeURL, true));
 
-        $ch = curl_init($nodeURL);
+        self::sendRequest($nodeURL, $wantMessage);
+    }
+
+    private static function sendRumorMessage(ChatMessage $message, $url) {
+        $localNode = self::getLocalNode();
+
+        $rumorMessage = array('Rumor' => $message->toArray(), 'EndPoint' => $localNode->getNodeURL());
+
+        self::sendRequest($url, $rumorMessage);
+
+    }
+
+    private static function sendRequest($url, $data) {
+
+        $data = json_encode($data);
+
+        $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $wantMessage);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
                 'Content-Type: application/json',
-                'Content-Length: ' . strlen($wantMessage))
+                'Content-Length: ' . strlen($data))
         );
 
         $result = curl_exec($ch);
 
+//        error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . ']::$result ' . print_r($result, true));
+
+        //curl errors
+        if(curl_errno($ch) != 0)
+        {
+            error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . '] - invalid curl error', E_USER_WARNING);
+        }
+
+        return $result;
     }
 
     private static function saveNode($nodeURL) {
@@ -102,5 +137,30 @@ class GossipNode {
         return new GossipNode($nodeURL);
     }
 
+
+    private static function processWantMessage($message) {
+
+        $myMessages = ChatMessage::getMessages();
+
+        foreach ($myMessages as $myMessage) {
+            $found = false;
+
+            foreach ($message['Want'] as $messageID) {
+                if ($myMessage->getMessageID() == $messageID) {
+                    $found = true;
+                    break;
+                }
+            }
+
+            if (!$found) {
+                self::sendRumorMessage($myMessage);
+            }
+
+        }
+    }
+
+    private static function processRumorMessage($message) {
+        ChatMessage::saveRumorMessage($message['Rumor']['MessageID'], $message['Rumor']['Originator'], $message['Rumor']['Text']);
+    }
 
 }
