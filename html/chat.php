@@ -7,8 +7,16 @@
  */
 require_once $_SERVER['DOCUMENT_ROOT'] . '/gossip/config/settings.php';
 
-$currentUser = User::getCurrentUser();
-$userId = $currentUser->getUserId();
+if (isset($_GET['userId'])) {
+    $currentUser = User::setUser($_GET['userId']);
+}
+else {
+    $currentUser = User::getCurrentUser();
+}
+
+if (!$currentUser) {
+    $currentUser = new User(User::ANONYMOUS_USER_ID, User::ANONYMOUS_USER_NAME);
+}
 
 $randomNode = GossipNode::getRandomNode();
 

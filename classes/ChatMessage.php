@@ -177,7 +177,7 @@ class ChatMessage
         list($messageUUID, $messageOrder) = explode(':', $messageID);
 
         if (!self::messageExists($messageUUID, $messageOrder)) {
-//            self::saveMessage($messageUUID, $messageOrder, $originator, $text);
+            self::saveMessage($messageUUID, $messageOrder, $originator, $text);
         }
     }
 

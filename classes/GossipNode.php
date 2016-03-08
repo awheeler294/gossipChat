@@ -39,6 +39,9 @@ class GossipNode {
 
     }
 
+    /**
+     * @return array GossipNode
+     */
     public static function getNodes() {
         $nodeInfoQuery = 'SELECT id, node_url
                             FROM gossip_nodes
@@ -59,17 +62,52 @@ class GossipNode {
         return LocalNode::build($_SERVER['HTTP_HOST'] . '/gossip/html');
     }
 
+    /**
+     * @return GossipNode
+     */
     public static function getRandomNode() {
         $nodes = GossipNode::getNodes();
 
-        $randomNode = rand(0, count($nodes) - 1);
+        $randomIndex = rand(0, count($nodes) - 1);
 
-        $node = $nodes[$randomNode];
+        $randomNode = $nodes[$randomIndex];
 
-        return $node;
+//        error_log(PHP_EOL . PHP_EOL);
+//        error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . ']::$nodes ' . print_r($nodes, true));
+//        error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . ']::$randomIndex ' . print_r($randomIndex, true));
+//        error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . ']::$randomNode ' . print_r($randomNode, true));
+//        error_log(PHP_EOL . PHP_EOL);
+
+        return $randomNode;
+    }
+
+    /**
+     * @return GossipNode
+     */
+    public static function getRandomOtherNode() {
+        $localNode = self::getLocalNode();
+
+        $randomNode = self::getRandomNode();
+
+        $fails = 0;
+        while ($randomNode->getNodeURL() == $localNode->getNodeURL() && $fails < 10) {
+            $randomNode = self::getRandomNode();
+            $fails++;
+        }
+
+//        error_log(PHP_EOL . PHP_EOL);
+//        error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . ']::$randomNode ' . print_r($randomNode, true));
+//        error_log(PHP_EOL . PHP_EOL);
+
+        return $randomNode;
     }
 
     public static function processMessage(array $message) {
+//        error_log(PHP_EOL . PHP_EOL);
+//        error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . ']::$message ' . print_r($message, true));
+//        error_log(PHP_EOL . PHP_EOL);
+
+
         if (isset($message['Want'])) {
             self::processWantMessage($message);
         }
@@ -83,7 +121,7 @@ class GossipNode {
 
         $wantMessage = array('Want' => $messageIDs, 'EndPoint' => $localNode->getNodeURL() . '/gossip_ear.php');
 
-        $randomNode = GossipNode::getRandomNode();
+        $randomNode = GossipNode::getRandomOtherNode();
         $nodeURL = $randomNode->getNodeURL();
         $nodeURL = "http://$nodeURL/";
 
@@ -102,6 +140,7 @@ class GossipNode {
     }
 
     private static function sendRequest($url, $data) {
+//        error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . ']::$url ' . print_r($url, true));
 
         $data = json_encode($data);
 
@@ -153,7 +192,7 @@ class GossipNode {
             }
 
             if (!$found) {
-                self::sendRumorMessage($myMessage);
+                self::sendRumorMessage($myMessage, $message['EndPoint']);
             }
 
         }

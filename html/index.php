@@ -27,7 +27,9 @@ header("Content-Type: application/json");
 //);
 
 //error_log('[Gossip][index.php]::$_REQUEST ' . print_r($_REQUEST, true));
+//error_log(PHP_EOL . PHP_EOL);
 //error_log('[Gossip][index.php]::file_get_contents("php://input") ' . print_r(file_get_contents("php://input"), true));
+//error_log(PHP_EOL . PHP_EOL);
 //error_log('[Gossip][index.php] Headers: ' . print_r(getallheaders(), true));
 
 
