@@ -15,6 +15,8 @@ $(document).ready(function() {
 
     $("#send-message-form").submit(sendChatMessage);
 
+    $("#add-node-form").submit(addNode);
+
 });
 
 function sendChatMessage(event) {
@@ -34,6 +36,27 @@ function sendChatMessage(event) {
         type: "POST",
         success: function (response) {
             updateMessages(response.messages);
+        },
+        error: function () {
+            console.log('An error occurred');
+        }
+    });
+}
+
+function addNode(event) {
+    event.preventDefault();
+
+    var url = "/gossip/html/ajax.php?function=addNode";
+    var nodeURL = $('#url-input').val();
+    $('#url-input').val('');
+
+    $.ajax({
+        url: url,
+        data: {nodeURL: nodeURL},
+        dataType: "json",
+        type: "POST",
+        success: function (response) {
+            console.log('Added node successfully')
         },
         error: function () {
             console.log('An error occurred');

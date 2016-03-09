@@ -57,3 +57,9 @@ function getOrder() {
 
     echo json_encode($response);
 }
+
+function addNode() {
+    $nodeURL = $_POST['nodeURL'];
+
+    GossipNode::saveNode($nodeURL);
+}

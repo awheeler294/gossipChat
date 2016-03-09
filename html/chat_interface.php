@@ -34,19 +34,36 @@ $messages = ChatMessage::getMessages();
     </head>
     <body>
         <div class="content-area">
-            <div class="info-area">
-                Node ID: <?= $node->getNodeId(); ?>
-                <div id="user" data-username="<?= $currentUser->getUsername(); ?> data-user-id="<?= $currentUser->getUserId(); ?>">
-                    Logged in as: <?= $currentUser->getUsername(); ?>
+
+            <div class="row">
+                <div class="info-area col-lg-6">
+                    Node ID: <?= $node->getNodeId(); ?>
+                    <div id="user" data-username="<?= $currentUser->getUsername(); ?> data-user-id="<?= $currentUser->getUserId(); ?>">
+                        Logged in as: <?= $currentUser->getUsername(); ?>
+                    </div>
+
+                    <div class="account-buttons">
+                        <a href="login.php" class="btn btn-default" role="button">Login</a>
+                        <a href="create_account.php" class="btn btn-default" role="button">Create Account</a>
+                        <a href="logout.php" class="btn btn-default" role="button">Logout</a>
+                    </div>
+
                 </div>
 
-                <div class="account-buttons">
-                    <a href="login.php" class="btn btn-default" role="button">Login</a>
-                    <a href="create_account.php" class="btn btn-default" role="button">Create Account</a>
-                    <a href="logout.php" class="btn btn-default" role="button">Logout</a>
+                <div class="node-management-area col-lg-6">
+                    <div>&nbsp;</div>
+                    <form id="add-node-form">
+                        <label for="url-input">Add Node</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="url-input" placeholder="Node URL">
+                            <span class="input-group-btn">
+                                <input type="submit" class="btn btn-default" type="button" value="Go">
+                            </span>
+                        </div><!-- /input-group -->
+                    </form>
                 </div>
-
             </div>
+
 
             <div class="chat-area">
                 <div class="messages-area">
@@ -68,8 +85,8 @@ $messages = ChatMessage::getMessages();
                         </div><!-- /.col-lg-6 -->
                     </div><!-- /.row -->
                 </form>
-
             </div>
+
         </div>
     </body>
 </html>

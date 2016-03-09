@@ -52,7 +52,26 @@ class GossipNode {
 
         $nodes = array();
         foreach($nodeInfoResults as $nodeInfo) {
-            $nodes[] = self::build($nodeInfo['node_url']);
+            $nodes[] = new GossipNode($nodeInfo['node_url']);
+        }
+
+        return $nodes;
+    }
+
+    /**
+     * @return array GossipNode
+     */
+    public static function getChatNodes() {
+        $nodeInfoQuery = 'SELECT id, node_url
+                            FROM chat_nodes
+                            WHERE  1';
+        $stmt = Database::getDB()->prepare($nodeInfoQuery);
+        $stmt->execute();
+        $nodeInfoResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $nodes = array();
+        foreach($nodeInfoResults as $nodeInfo) {
+            $nodes[] = new GossipNode($nodeInfo['node_url']);
         }
 
         return $nodes;
@@ -102,11 +121,23 @@ class GossipNode {
         return $randomNode;
     }
 
+    /**
+     * @return GossipNode
+     */
+    public static function getRandomChatNode() {
+        $nodes = GossipNode::getChatNodes();
+
+        $randomIndex = rand(0, count($nodes) - 1);
+
+        $randomNode = $nodes[$randomIndex];
+
+        return $randomNode;
+    }
+
     public static function processMessage(array $message) {
 //        error_log(PHP_EOL . PHP_EOL);
 //        error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . ']::$message ' . print_r($message, true));
 //        error_log(PHP_EOL . PHP_EOL);
-
 
         if (isset($message['Want'])) {
             self::processWantMessage($message);
@@ -123,7 +154,6 @@ class GossipNode {
 
         $randomNode = GossipNode::getRandomOtherNode();
         $nodeURL = $randomNode->getNodeURL();
-        $nodeURL = "http://$nodeURL/";
 
 //        error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . ']::$nodeURL ' . print_r($nodeURL, true));
 
@@ -134,6 +164,8 @@ class GossipNode {
         $localNode = self::getLocalNode();
 
         $rumorMessage = array('Rumor' => $message->toArray(), 'EndPoint' => $localNode->getNodeURL());
+        error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . ']::$url ' . print_r($url, true));
+        error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . ']::$rumorMessage ' . print_r($rumorMessage, true));
 
         self::sendRequest($url, $rumorMessage);
 
@@ -141,6 +173,12 @@ class GossipNode {
 
     private static function sendRequest($url, $data) {
 //        error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . ']::$url ' . print_r($url, true));
+        $parsedURL = parse_url($url);
+//        error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . ']::$parsedURL ' . print_r($parsedURL, true));
+        if (!isset($parsedURL['scheme']) || !$parsedURL['scheme']) {
+            $url = 'http://';
+        }
+        $url .= self::unparseUrl($parsedURL);
 
         $data = json_encode($data);
 
@@ -160,15 +198,33 @@ class GossipNode {
         //curl errors
         if(curl_errno($ch) != 0)
         {
+
             error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . '] - invalid curl error', E_USER_WARNING);
+            error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . ']::$url ' . print_r($url, true));
+            error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . ']::data ' . print_r($data, true));
+            error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . ']::$result ' . print_r($result, true));
         }
 
         return $result;
     }
 
-    private static function saveNode($nodeURL) {
+    private static function unparseUrl($parsed_url) {
+        $scheme   = isset($parsed_url['scheme']) ? $parsed_url['scheme'] . '://' : '';
+        $host     = isset($parsed_url['host']) ? $parsed_url['host'] : '';
+        $port     = isset($parsed_url['port']) ? ':' . $parsed_url['port'] : '';
+        $user     = isset($parsed_url['user']) ? $parsed_url['user'] : '';
+        $pass     = isset($parsed_url['pass']) ? ':' . $parsed_url['pass']  : '';
+        $pass     = ($user || $pass) ? "$pass@" : '';
+        $path     = isset($parsed_url['path']) ? $parsed_url['path'] : '';
+        $query    = isset($parsed_url['query']) ? '?' . $parsed_url['query'] : '';
+        $fragment = isset($parsed_url['fragment']) ? '#' . $parsed_url['fragment'] : '';
+        return "$scheme$user$pass$host$port$path$query$fragment";
+    }
+
+    public static function saveNode($nodeURL) {
         $insertNodeQuery = 'INSERT INTO gossip_nodes(node_url)
-                            VALUES(:nodeURL)';
+                            VALUES(:nodeURL)
+                            ON DUPLICATE KEY UPDATE node_url = node_url';
         $stmt = Database::getDB()->prepare($insertNodeQuery);
         $stmt->bindValue('nodeURL', $nodeURL);
         $stmt->execute();
@@ -178,6 +234,7 @@ class GossipNode {
 
 
     private static function processWantMessage($message) {
+        error_log('[Gossip][' . __CLASS__ . '][' . __FUNCTION__ . ']::$message ' . print_r($message, true));
 
         $myMessages = ChatMessage::getMessages();
 

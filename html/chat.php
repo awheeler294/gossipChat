@@ -18,8 +18,10 @@ if (!$currentUser) {
     $currentUser = new User(User::ANONYMOUS_USER_ID, User::ANONYMOUS_USER_NAME);
 }
 
-$randomNode = GossipNode::getRandomNode();
+$randomNode = GossipNode::getRandomChatNode();
 
 $nodeURL = $randomNode->getNodeURL();
+
+$userId = $currentUser->getUserId();
 
 header("Location: http://$nodeURL/chat_interface.php?userId=$userId");
